@@ -4,8 +4,16 @@ AUTH_REALM="Restricted Area"
 SESSION_TIMEOUT=10800  # 3 jam dalam detik
 CONFIG_FILE="/opt/otoauth/.config_auth"
 
+function require_sudo() {
+    if [ "$EUID" -ne 0 ]; then
+        echo "[!] Script ini harus dijalankan dengan sudo atau sebagai root."
+        echo "    Jalankan: sudo $0"
+        exit 1
+    fi
+}
+
 function enable_auth() {
-    apt install apache2-utils
+    apt install -y apache2-utils
     mkdir -p /opt/otoauth
     HTPASSWD_FILE="/opt/otoauth/.htpasswd"
     
@@ -52,7 +60,6 @@ Require valid-user
 Header set Cache-Control "private, max-age=$SESSION_TIMEOUT"
 EOF
 
-    # Simpan konfigurasi path
     echo "$HTPASSWD_FILE" > "$CONFIG_FILE"
     echo "$HTACCESS_FILE" >> "$CONFIG_FILE"
 
@@ -101,6 +108,9 @@ function menu() {
         *) echo "[!] Pilihan tidak valid." ;;
     esac
 }
+
+# Pastikan dijalankan sebagai root
+require_sudo
 
 # Looping menu
 while true; do
